@@ -22,39 +22,35 @@ class Conv2d(nn.Module):
         return x
 
 
-class FC(nn.Module):
-    def __init__(self, in_features, out_features, relu=True):
-        super(FC, self).__init__()
-        self.fc = nn.Linear(in_features, out_features)
-        self.relu = nn.ReLU(inplace=True) if relu else None
-
-    def forward(self, x):
-        x = self.fc(x)
-        if self.relu is not None:
-            x = self.relu(x)
-        return x
-
-
 def save_net(fname, net):
+    '''
+    Save the network parameters/weights
+    '''
     import h5py
     h5f = h5py.File(fname, mode='w')
     for k, v in net.state_dict().items():
         h5f.create_dataset(k, data=v.cpu().numpy())
 
 
-def load_net(fname, net):
+def load_net(fname, net, dtype=torch.FloatTensor):
+    '''
+    Load the network parameters/weights
+    '''
     import h5py
     h5f = h5py.File(fname, mode='r')
     for k, v in net.state_dict().items():
-        param = torch.from_numpy(np.asarray(h5f[k]))
+        param = torch.from_numpy(np.asarray(h5f[k])).type(dtype)
         v.copy_(param)
 
 
 def np_to_variable(x, is_cuda=True, is_training=False, dtype=torch.FloatTensor):
+    '''Converts the numpy matrix to a tensor before it gets fed into the NN
+    - Does preprocessing step is included here
+    '''
     if is_training:
         v = Variable(torch.as_tensor(x).type(dtype))
     else:
-        v = Variable(torch.as_tensor(x).type(dtype), requires_grad=False, volatile=True)
+        v = Variable(torch.as_tensor(x).type(dtype), requires_grad = False, volatile = True)
     if is_cuda:
         v = v.cuda()
     return v
@@ -72,7 +68,6 @@ def weights_normal_init(model, dev=0.01):
     else:
         for m in model.modules():
             if isinstance(m, nn.Conv2d):
-                # print torch.sum(m.weight)
                 m.weight.data.normal_(0.0, dev)
                 if m.bias is not None:
                     m.bias.data.fill_(0.0)

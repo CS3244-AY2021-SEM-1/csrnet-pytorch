@@ -1,3 +1,16 @@
+'''
+Contains the ImageDataLoader class
+- ImageDataLoader returns an iterable object
+- Each element in the iterable object is a dictionary containing:
+    - image: the image
+    - gt_density
+- Instantiate a new ImageDataLoader object using ImageDataLoader(data_path, shuffle=False, pre_load=False)
+    - data_path: the path to the consolidated .h5 files
+    - shuffle (default=False): shuffles the .h5 files
+    - pre-load (default=False): if true, all training and validation images are loaded into CPU RAM for faster processing. 
+                                This avoids frequent file reads. Use this only for small datasets.
+'''
+
 import numpy as np
 import cv2
 import os
@@ -7,27 +20,16 @@ import h5py
 
 
 class ImageDataLoader():
-    def __init__(self, data_path, shuffle=False, pre_load=False):
-        """
-        This class returns an iterable object
-        Each element in the iterable object is a dictionary containing:
-            image: the image
-            gt_density: the ground truth density
-
-        Args:
-            - data_path: consolidated files path
-            - pre_load: if true, all training and validation images are loaded into CPU RAM 
-            for faster processing. This avoids frequent file reads. Use this only for small datasets.
-        """
+    def __init__(self, data_path, shuffle=False, pre_load=False, num_pool=None):
 
         self.data_path = data_path
         self.pre_load = pre_load
         self.shuffle = shuffle
+        self.num_pool = num_pool
         if shuffle: random.seed(2468)
 
         self.data_files = [os.path.join(data_path, filename) for filename in os.listdir(data_path)
                            if os.path.isfile(os.path.join(data_path, filename))]
-        #self.data_files.sort()
 
         self.num_samples = len(self.data_files)
         self.blob_list = {}
@@ -40,12 +42,11 @@ class ImageDataLoader():
                 f = h5py.File(fname, "r")
 
                 img = f['image'][()]
-                blob['data'] = img.reshape((1, 3, img.shape[0], img.shape[1]))  # might want to change this to a tensor object in future
+                blob['data'] = img.reshape((1, 3, img.shape[0], img.shape[1]))
 
                 den = f['density'][()]
-                blob['gt_density'] = den.reshape((1, 1, den.shape[0], den.shape[1]))  # might want to change this to a tensor object in future
+                blob['gt_density'] = den.reshape((1, 1, den.shape[0], den.shape[1]))
 
-                blob['fname'] = fname
                 self.blob_list[idx] = blob
 
                 idx += 1
@@ -62,6 +63,7 @@ class ImageDataLoader():
                 random.shuffle(self.data_files)
         files = self.data_files
         id_list = self.id_list
+        num_pool = self.num_pool
 
         for idx in id_list:
             if self.pre_load:
@@ -75,12 +77,22 @@ class ImageDataLoader():
                 img = f['image'][()]
                 den = f['density'][()]
 
-                blob['data'] = img.reshape(1, 3, img.shape[0], img.shape[1])        # might want to change this to a tensor object in future
-                blob['gt_density'] = den.reshape(1, 1, img.shape[0], img.shape[1])  # might want to change this to a tensor object in future
-                #blob['fname'] = fname
+                # target shape
+                target_shape = (720, 1280)
+                divide = 2**num_pool
+                gt_target_shape = (720//divide, 1280//divide)
+
+                # resizing with cv2
+                img_resized = cv2.resize(img, target_shape, interpolation = cv2.INTER_CUBIC)
+                gt_resized = cv2.resize(den, gt_target_shape, interpolation = cv2.INTER_CUBIC)
+
+                blob['data'] = img_resized.reshape(1, 3, target_shape[0], target_shape[1])
+                blob['gt_density'] = gt_resized.reshape(1, 1, gt_target_shape[0], gt_target_shape[1])
+
                 self.blob_list[idx] = blob
 
             yield blob
 
     def get_num_samples(self):
         return self.num_samples
+
