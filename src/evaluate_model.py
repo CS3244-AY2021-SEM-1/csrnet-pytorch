@@ -1,6 +1,6 @@
 import torch
-from models.smc.src.crowd_count import CrowdCounter
-from models.smc.src import network
+from models.csrnet_pytorch.src.crowd_count import CrowdCounter
+from models.csrnet_pytorch.src import network
 import numpy as np
 
 

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.smc.src.network import Conv2d
+from models.csrnet_pytorch.src.network import Conv2d
 
 class CSRNet(nn.Module):
     '''

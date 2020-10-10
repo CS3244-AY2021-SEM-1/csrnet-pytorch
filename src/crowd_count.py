@@ -1,12 +1,12 @@
 import torch.nn as nn
-from models.smc.src import network
-from models.smc.src.model import SMC
+from models.csrnet_pytorch.src import network
+from models.csrnet_pytorch.src.model import CSRNet
 
 
 class CrowdCounter(nn.Module):
     def __init__(self, is_cuda=False):
         super(CrowdCounter, self).__init__()        
-        self.model = SMC(vary=False)
+        self.model = CSRNet()
         self.loss_fn = nn.MSELoss()
         self.is_cuda=is_cuda
         
