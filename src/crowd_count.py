@@ -1,6 +1,6 @@
 import torch.nn as nn
-from models.smc.src import network
-from models.smc.src.model import CSRNet
+from models.csrnet_pytorch.src import network
+from models.csrnet_pytorch.src.model import CSRNet
 
 
 class CrowdCounter(nn.Module):
