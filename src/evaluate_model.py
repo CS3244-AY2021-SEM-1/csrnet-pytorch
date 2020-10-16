@@ -63,8 +63,9 @@ def evaluate_model(trained_model, data_loader, is_cuda=False):
     # averaging
     MAE /= data_loader.get_num_samples()
     MSE /= data_loader.get_num_samples()
+    RMSE = np.sqrt(MSE)
     
-    return MAEcrowddensity, MSEcrowddensity, MAEweather, MSEweather, MAE, MSE
+    return MAEcrowddensity, MSEcrowddensity, MAEweather, MSEweather, MAE, MSE, RMSE
 
 
 

@@ -1,13 +1,14 @@
 import torch.nn as nn
 from models.csrnet_pytorch.src import network
 from models.csrnet_pytorch.src.model import CSRNet
-
+import cv2
 
 class CrowdCounter(nn.Module):
     def __init__(self, is_cuda=False):
         super(CrowdCounter, self).__init__()        
         self.model = CSRNet()
-        self.loss_fn = nn.MSELoss()
+        #self.loss_fn = nn.MSELoss()
+        self.loss_fn = nn.SmoothL1Loss()
         self.is_cuda=is_cuda
         
     @property
@@ -21,9 +22,9 @@ class CrowdCounter(nn.Module):
             is_training=self.training
         )
 
+        # generating density map + upsampling
         density_map = self.model(im_data)
-#         print(f'Density map size: {density_map.shape}. Density map type: {density_map.dtype}')
-
+        density_map = cv2.resize(density_map, (density_map.shape[0] * 8, density_map.shape[1] * 8), interpolation = cv2.INTER_LINEAR) * 64
         
         if self.training:                        
             gt_data = network.np_to_variable(
