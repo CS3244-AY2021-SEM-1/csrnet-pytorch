@@ -24,7 +24,7 @@ class CrowdCounter(nn.Module):
 
         # generating density map + upsampling
         density_map = self.model(im_data)
-        density_map = cv2.resize(density_map, (density_map.shape[0] * 8, density_map.shape[1] * 8), interpolation = cv2.INTER_LINEAR)
+        density_map = cv2.resize(density_map, (density_map.shape[0] * 8, density_map.shape[1] * 8), interpolation = cv2.INTER_LINEAR) * 64
         
         if self.training:                        
             gt_data = network.np_to_variable(
