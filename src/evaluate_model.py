@@ -2,6 +2,7 @@ import torch
 from models.csrnet_pytorch.src.crowd_count import CrowdCounter
 from models.csrnet_pytorch.src import network
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
