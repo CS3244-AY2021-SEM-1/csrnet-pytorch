@@ -11,7 +11,7 @@ class CrowdCounter(nn.Module):
         
     @property
     def loss(self):
-        return self.loss
+        return self.loss_value
 
     def forward(self, im_data, gt_data=None):        
         im_data = network.np_to_variable(
@@ -22,7 +22,7 @@ class CrowdCounter(nn.Module):
 
         # generating density map + upsampling to match the gt_data shape
         density_map = self.model(im_data)
-        density_map = nn.functional.interpolate(density_map, (gt_data.shape[2], gt_data.shape[3]), mode='bilinear')
+        density_map = nn.functional.interpolate(density_map, (gt_data.shape[2], gt_data.shape[3]), mode='bilinear', align_corners=True)
         
         if self.training:                        
             gt_data = network.np_to_variable(
@@ -31,7 +31,7 @@ class CrowdCounter(nn.Module):
                 is_training=self.training
             )
 
-            self.loss = self.build_loss(density_map, gt_data)
+            self.loss_value = self.build_loss(density_map, gt_data)
             
         return density_map
     
