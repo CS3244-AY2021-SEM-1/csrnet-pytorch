@@ -45,6 +45,9 @@ class ImageDataLoader():
                 den = f['density'][()]
                 metadata = f['metadata'][()]
                 
+                # if BW, skip
+                if len(img.shape) == 2: continue 
+                
                 blob['data'] = img.reshape(1, 3, img.shape[0], img.shape[1])
                 blob['gt_density'] = den.reshape(1, 1, den.shape[0], den.shape[1])
                 blob['metadata'] = ast.literal_eval(metadata)
@@ -79,6 +82,9 @@ class ImageDataLoader():
                 img = f['image'][()]
                 den = f['density'][()]
                 metadata = f['metadata'][()]
+
+                # if BW, skip
+                if len(img.shape) == 2: continue
 
                 blob['data'] = img.reshape(1, 3, img.shape[0], img.shape[1])
                 blob['gt_density'] = den.reshape(1, 1, den.shape[0], den.shape[1])
