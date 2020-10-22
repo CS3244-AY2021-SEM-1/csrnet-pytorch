@@ -18,18 +18,19 @@ import random
 import pandas as pd
 import h5py
 import ast
+import torch
 
 class ImageDataLoader():
-    def __init__(self, data_path, shuffle=False, pre_load=False, num_pool=None):
+    def __init__(self, data_path, shuffle=False, pre_load=False, size=0):
 
         self.data_path = data_path
         self.pre_load = pre_load
         self.shuffle = shuffle
-        self.num_pool = num_pool
+        self.size = size
         if shuffle: random.seed(2468)
 
         self.data_files = [os.path.join(data_path, filename) for filename in os.listdir(data_path)
-                           if os.path.isfile(os.path.join(data_path, filename))]
+                           if os.path.isfile(os.path.join(data_path, filename))][:self.size]
 
         self.num_samples = len(self.data_files)
         self.blob_list = {}
@@ -41,15 +42,15 @@ class ImageDataLoader():
                 blob = {}
                 f = h5py.File(fname, "r")
 
-                img = f['image'][()]
-                den = f['density'][()]
+                img = torch.as_tensor(f['image'][()]).permute(2,0,1).unsqueeze(0)
+                den = torch.as_tensor(f['density'][()]).unsqueeze(0).unsqueeze(0)
                 metadata = f['metadata'][()]
-                
+
                 # if BW, skip
-                if len(img.shape) == 2: continue 
-                
-                blob['data'] = img.reshape(1, 3, img.shape[0], img.shape[1])
-                blob['gt_density'] = den.reshape(1, 1, den.shape[0], den.shape[1])
+                if len(img.shape) == 2: continue
+
+                blob['data'] = img
+                blob['gt_density'] = den
                 blob['metadata'] = ast.literal_eval(metadata)
                 
                 self.blob_list[idx] = blob
@@ -68,7 +69,6 @@ class ImageDataLoader():
                 random.shuffle(self.data_files)
         files = self.data_files
         id_list = self.id_list
-        num_pool = self.num_pool
 
         for idx in id_list:
             if self.pre_load:
@@ -79,15 +79,15 @@ class ImageDataLoader():
                 blob = {}
                 f = h5py.File(fname, "r")
 
-                img = f['image'][()]
-                den = f['density'][()]
+                img = torch.as_tensor(f['image'][()]).permute(2,0,1).unsqueeze(0)
+                den = torch.as_tensor(f['density'][()]).unsqueeze(0).unsqueeze(0)
                 metadata = f['metadata'][()]
 
                 # if BW, skip
                 if len(img.shape) == 2: continue
 
-                blob['data'] = img.reshape(1, 3, img.shape[0], img.shape[1])
-                blob['gt_density'] = den.reshape(1, 1, den.shape[0], den.shape[1])
+                blob['data'] = img
+                blob['gt_density'] = den
                 blob['metadata'] = ast.literal_eval(metadata)
 
                 self.blob_list[idx] = blob
@@ -96,4 +96,18 @@ class ImageDataLoader():
 
     def get_num_samples(self):
         return self.num_samples
+    
+    def get_test_input(self, index=0):
+        fname = self.data_files[index]
+        blob = {}
+        f = h5py.File(fname, "r")
 
+        img = torch.as_tensor(f['image'][()]).permute(2,0,1).unsqueeze(0)
+        den = torch.as_tensor(f['density'][()]).unsqueeze(0).unsqueeze(0)
+        metadata = f['metadata'][()]
+                    
+        blob['data'] = img
+        blob['gt_density'] = den
+        blob['metadata'] = ast.literal_eval(metadata)
+
+        return blob
